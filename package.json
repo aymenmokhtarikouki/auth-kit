@@ -9,13 +9,14 @@
     "examples/*"
   ],
   "scripts": {
-    "setup": "npm install -w @authkit/otp -w @authkit/core -w @authkit/express && npm run build",
+    "setup": "npm install --include-workspace-root -w @authkit/otp -w @authkit/core -w @authkit/express && npm run build",
     "build": "npm run build -w @authkit/otp -w @authkit/core -w @authkit/express",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "demo": "npm run dev -w @authkit/demo-server"
   },
   "devDependencies": {
+    "@types/node": "^22.10.0",
     "typescript": "^5.7.2",
     "vitest": "^3.2.0"
   }
