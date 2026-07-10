@@ -57,20 +57,9 @@ Sends a code to the NEW email/phone (proves control). 409 if taken.
 ### `POST /users/me/contact/verify` (authed) — `{ channel, destination, code }`
 → `{ user }` with the updated contact.
 
-## Address book (when the app mounts @authkit/addresses)
+## Address book + geocoding
 
-- `GET /me/addresses` → `Address[]`
-- `POST /me/addresses` — `{ label?, line?, lat, lng, isDefault? }` → `Address`
-  (first address becomes default automatically)
-- `PATCH /me/addresses/:id`, `DELETE /me/addresses/:id` (deleting the default
-  promotes the newest remaining), `POST /me/addresses/:id/default`
-- `Address` = `{ id, userId, label, line, lat, lng, isDefault, extra: {…app fields}, createdAt, updatedAt }`
-
-## Geocoding proxy
-
-- `GET /geocoding/autocomplete?q=…` → `GeocodeResult[]`
-- `GET /geocoding/reverse?lat=…&lng=…` → `GeocodeResult | null`
-- `GeocodeResult` = `{ label, lat, lng, placeId?, parts?: { street?, houseNumber?, postalCode?, city?, country?, countryCode? } }`
+Moved to **location-kit** — see its `contracts/API.md`.
 
 ## Client rules
 

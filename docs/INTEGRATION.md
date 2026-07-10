@@ -16,10 +16,9 @@ in-repo; npm 404s otherwise — same gotcha as clustermap):
 
 ```jsonc
 "dependencies": {
-  "@authkit/otp":       "file:vendor/auth-kit/packages/otp",
-  "@authkit/core":      "file:vendor/auth-kit/packages/core",
-  "@authkit/addresses": "file:vendor/auth-kit/packages/addresses",
-  "@authkit/express":   "file:vendor/auth-kit/packages/express"
+  "@authkit/otp":     "file:vendor/auth-kit/packages/otp",
+  "@authkit/core":    "file:vendor/auth-kit/packages/core",
+  "@authkit/express": "file:vendor/auth-kit/packages/express"
 },
 "scripts": { "authkit:setup": "npm --prefix vendor/auth-kit run setup" }
 ```
@@ -60,9 +59,7 @@ const otpStore: OtpStore = {
 //   add → create { jti, userId, expiresAt } · isActive → find where revokedAt null & not expired
 //   revoke → update { revokedAt: now } · revokeAllForUser → updateMany
 
-// AddressStore<YumaExtra> → model UserAddress; buildExtra:
-import { computeCells } from '@clustermap/core'
-const hooks = { buildExtra: (i) => ({ ...computeCells(i.lat, i.lng), placeId: i.placeId }) }
+// AddressStore recipes → see location-kit/docs/INTEGRATION.md
 ```
 
 Sessions: `{ mode: 'rotating', store }`. OTP senders: wrap the existing

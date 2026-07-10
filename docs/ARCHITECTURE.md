@@ -24,10 +24,10 @@ Flutter / web client
    │        └──► IdTokenVerifier (google/apple JWKS)
    ▼
 UserStore / SessionStore                                                (app)
-
-@authkit/addresses (sibling, NOT a dependency of core)
-   └──► AddressStore / Geocoder                                          (app)
 ```
+
+(The address book + geocoding live in the separate **location-kit** repo —
+identity and location are independent domains that compose in app endpoints.)
 
 ## OTP-first identity
 
@@ -72,19 +72,9 @@ destination (proving control), taken-destination checks run at request AND
 confirm (race window), and the same OTP engine enforces TTL/attempts — one
 security surface, not two.
 
-## Addresses: included, but composed
-
-The address book repeats in every app, so it's IN the kit — but as a sibling
-package, not inside auth: identity works without it and future apps can skip
-it. It owns the behavior apps keep rewriting: first-address-auto-default,
-default flipping, default-deletion promotion, coordinate validation, and
-`buildExtra` — recompute app fields when coordinates change (yuma: H3 cells
-via `@clustermap/core`'s `computeCells`; synergy, not coupling). The Mapbox
-geocoder adapter (server-side, token never reaches clients, pre-split address
-parts) is the lineo proxy both apps were already duplicating.
-
 ## What deliberately is NOT here
 
-Passwords as a requirement (optional compat only) · address shapes in auth ·
-role enums / profile schemas (generic `Profile` + `Claims`) · rate limiting
-implementation (app middleware slot) · FCM/push · passport redirect wiring.
+Passwords as a requirement (optional compat only) · addresses/geolocation
+(→ location-kit) · role enums / profile schemas (generic `Profile` + `Claims`)
+· rate limiting implementation (app middleware slot) · FCM/push · passport
+redirect wiring.

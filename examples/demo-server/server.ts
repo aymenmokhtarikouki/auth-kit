@@ -1,15 +1,23 @@
 /**
- * auth-kit demo — every flow wired with in-memory stores, zero external
- * services. OTP dev code: 123456 (printed nothing is sent). Try:
+ * auth-kit demo — every identity flow wired with in-memory stores, zero
+ * external services. OTP dev code: 123456 (nothing is sent). Try:
  *
  *   curl -X POST :4830/auth/otp/request -H 'content-type: application/json' \
  *        -d '{"channel":"EMAIL","destination":"me@demo.co"}'
  *   curl -X POST :4830/auth/otp/verify -H 'content-type: application/json' \
  *        -d '{"channel":"EMAIL","destination":"me@demo.co","code":"123456","profile":{"firstName":"Aymen"}}'
  *   curl :4830/users/me -H 'authorization: Bearer <token>'
+ *
+ * (The address book + geocoding demo lives in location-kit.)
  */
 import express from 'express'
 import { createOtpService, createInMemoryOtpStore } from '@authkit/otp'
+import {
+  createAuthService,
+  createInMemoryUserStore,
+  createInMemoryRotatingSessionStore,
+} from '@authkit/core'
+import { createAuthMiddleware, createAuthHandlers } from '@authkit/express'
 
 // One-time declaration merge so Express's Request knows about the `auth`
 // field the authkit middleware attaches. Every consumer app adds this once
@@ -23,20 +31,6 @@ declare global {
     }
   }
 }
-import {
-  createAuthService,
-  createInMemoryUserStore,
-  createInMemoryRotatingSessionStore,
-} from '@authkit/core'
-import {
-  createAddressService,
-  createInMemoryAddressStore,
-  mapboxGeocoder,
-  AddressError,
-  type AddressInput,
-  type Geocoder,
-} from '@authkit/addresses'
-import { createAuthMiddleware, createAuthHandlers, sendKitError } from '@authkit/express'
 
 interface Profile {
   firstName?: string
@@ -64,28 +58,6 @@ const auth = createAuthService<Profile, { email: string | null }>({
   },
 })
 
-// Address extras demo: pretend-H3 cell (yuma would call @clustermap/core computeCells).
-const addresses = createAddressService<{ cell: string }>({
-  store: createInMemoryAddressStore(),
-  hooks: { buildExtra: (i) => ({ cell: `demo-cell:${i.lat.toFixed(3)},${i.lng.toFixed(3)}` }) },
-})
-
-// Real Mapbox when a token is provided, canned suggestions otherwise.
-const geocoder: Geocoder = process.env.MAPBOX_TOKEN
-  ? mapboxGeocoder({ accessToken: process.env.MAPBOX_TOKEN, country: 'de', language: 'de' })
-  : {
-      autocomplete: async (q) => [
-        {
-          label: `${q} 12, 12203 Berlin, Germany`,
-          lat: 52.52,
-          lng: 13.405,
-          placeId: 'demo.1',
-          parts: { street: q, houseNumber: '12', postalCode: '12203', city: 'Berlin', countryCode: 'DE' },
-        },
-      ],
-      reverse: async (lat, lng) => ({ label: `Somewhere near ${lat},${lng}`, lat, lng }),
-    }
-
 // ── HTTP ─────────────────────────────────────────────────────────────────────
 
 const app = express()
@@ -105,38 +77,6 @@ app.post('/users/me/contact/verify', requireAuth, handlers.contactChangeConfirm)
 app.get('/users/me', requireAuth, async (req, res) => {
   const user = await users.findById(req.auth!.userId)
   res.json({ data: { user } })
-})
-
-// Address book (composition example: auth middleware + addresses service).
-app.get('/me/addresses', requireAuth, async (req, res) => {
-  res.json({ data: await addresses.list(req.auth!.userId) })
-})
-app.post('/me/addresses', requireAuth, async (req, res) => {
-  try {
-    res.json({ data: await addresses.create(req.auth!.userId, req.body as AddressInput) })
-  } catch (e) {
-    sendKitError(res, e)
-  }
-})
-app.post('/me/addresses/:id/default', requireAuth, async (req, res) => {
-  try {
-    res.json({ data: await addresses.setDefault(req.auth!.userId, req.params.id) })
-  } catch (e) {
-    if (e instanceof AddressError) res.status(e.status).json({ error: { code: e.code, message: e.message } })
-    else sendKitError(res, e)
-  }
-})
-app.delete('/me/addresses/:id', requireAuth, async (req, res) => {
-  try {
-    await addresses.remove(req.auth!.userId, req.params.id)
-    res.status(204).send()
-  } catch (e) {
-    sendKitError(res, e)
-  }
-})
-
-app.get('/geocoding/autocomplete', async (req, res) => {
-  res.json({ data: await geocoder.autocomplete(String(req.query.q ?? '')) })
 })
 
 const PORT = Number(process.env.PORT ?? 4830)
