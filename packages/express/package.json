@@ -1,0 +1,19 @@
+{
+  "name": "@authkit/express",
+  "version": "0.1.0",
+  "description": "Express 4/5-compatible adapter for @authkit/core — requireAuth/optionalAuth middleware, claim guards, standard endpoint handlers and error mapping. Envelope-agnostic, structural req/res typing.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@authkit/core": "0.1.0",
+    "@authkit/otp": "0.1.0"
+  }
+}

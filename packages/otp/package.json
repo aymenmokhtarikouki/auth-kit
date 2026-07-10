@@ -1,0 +1,18 @@
+{
+  "name": "@authkit/otp",
+  "version": "0.1.0",
+  "description": "One-time-code engine: generate → hash → deliver → verify, with TTL, attempt caps, resend cooldown and a dev master code. Storage and delivery are seams (OtpStore / OtpSender).",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2"
+  }
+}

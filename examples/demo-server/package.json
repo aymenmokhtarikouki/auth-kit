@@ -1,0 +1,22 @@
+{
+  "name": "@authkit/demo-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo: full auth-kit wiring with in-memory stores — OTP login (dev code 123456), sessions, contact change, address book with geocoding.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@authkit/addresses": "0.1.0",
+    "@authkit/core": "0.1.0",
+    "@authkit/express": "0.1.0",
+    "@authkit/otp": "0.1.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "tsx": "^4.19.2"
+  }
+}
