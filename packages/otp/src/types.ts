@@ -38,6 +38,8 @@ export interface OtpSender {
     destination: string
     code: string
     ttlSeconds: number
+    /** Per-request app context forwarded from request() (e.g. Android SMS appHash). */
+    context?: unknown
   }): Promise<void>
 }
 

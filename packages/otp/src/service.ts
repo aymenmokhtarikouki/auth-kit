@@ -22,8 +22,8 @@ function defaultValidate(channel: OtpChannel, normalized: string): boolean {
 }
 
 export interface OtpService {
-  /** Issue + deliver a code. Returns TTL; throws COOLDOWN when re-requested too fast. */
-  request(channel: OtpChannel, destination: string): Promise<{ expiresInSeconds: number; sent: boolean }>
+  /** Issue + deliver a code. Returns TTL; throws COOLDOWN when re-requested too fast.  is forwarded to the sender. */
+  request(channel: OtpChannel, destination: string, context?: unknown): Promise<{ expiresInSeconds: number; sent: boolean }>
   /** Verify + consume the latest code. Throws EXPIRED / TOO_MANY_ATTEMPTS / INVALID_CODE. */
   verify(channel: OtpChannel, destination: string, code: string): Promise<void>
   normalize(channel: OtpChannel, destination: string): string
@@ -46,7 +46,7 @@ export function createOtpService(args: CreateOtpServiceArgs): OtpService {
     return crypto.randomInt(0, max).toString().padStart(options.codeLength, '0')
   }
 
-  async function request(channel: OtpChannel, rawDestination: string) {
+  async function request(channel: OtpChannel, rawDestination: string, context?: unknown) {
     const destination = normalizeDestination(channel, rawDestination)
     if (!validate(channel, destination)) {
       throw new OtpError('INVALID_DESTINATION', 400, `Enter a valid ${channel === 'EMAIL' ? 'email address' : 'phone number'}`)
@@ -74,7 +74,7 @@ export function createOtpService(args: CreateOtpServiceArgs): OtpService {
 
     // Dev mode: fixed code, nothing leaves the machine.
     if (!options.devCode) {
-      await sender.send({ channel, destination, code, ttlSeconds: options.ttlSeconds })
+      await sender.send({ channel, destination, code, ttlSeconds: options.ttlSeconds, context })
     }
 
     return { expiresInSeconds: options.ttlSeconds, sent: !options.devCode }
