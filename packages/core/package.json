@@ -1,6 +1,6 @@
 {
   "name": "@authkit/core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "OTP-first identity & sessions: email/phone code login (find-or-create), Google & Apple ID-token sign-in with account linking, JWT access tokens, pluggable refresh strategies (rotating multi-device / static single-token), OTP-verified contact change. Storage-agnostic.",
   "license": "UNLICENSED",
   "main": "dist/index.js",
@@ -13,12 +13,20 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@authkit/otp": "0.1.0",
+    "@authkit/otp": "1.0.0",
     "bcryptjs": "^3.0.2",
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.7"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aymenmokhtarikouki/auth-kit.git",
+    "directory": "packages/core"
   }
 }

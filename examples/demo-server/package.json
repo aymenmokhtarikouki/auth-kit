@@ -9,9 +9,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@authkit/core": "0.1.0",
-    "@authkit/express": "0.1.0",
-    "@authkit/otp": "0.1.0",
+    "@authkit/core": "1.0.0",
+    "@authkit/express": "1.0.0",
+    "@authkit/otp": "1.0.0",
     "express": "^4.21.2"
   },
   "devDependencies": {
