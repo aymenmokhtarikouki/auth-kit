@@ -21,6 +21,9 @@ interface JwksVerifierConfig {
   clientIds: string[]
 }
 
+// One lazy import for the whole module (jose is ESM-only; Node caches it).
+let josePromise: Promise<typeof import('jose')> | null = null
+
 function createJwksVerifier(config: JwksVerifierConfig): IdTokenVerifier {
   // Cache the remote JWKS across calls (jose caches + re-fetches on rotation).
   let jwksPromise: Promise<ReturnType<typeof import('jose').createRemoteJWKSet>> | null = null
@@ -28,13 +31,15 @@ function createJwksVerifier(config: JwksVerifierConfig): IdTokenVerifier {
   return {
     async verify(idToken: string): Promise<ProviderIdentity> {
       try {
-        const { createRemoteJWKSet, jwtVerify } = await import('jose')
+        const { createRemoteJWKSet, jwtVerify } = await (josePromise ??= import('jose'))
         jwksPromise ??= Promise.resolve(createRemoteJWKSet(new URL(config.jwksUrl)))
         const jwks = await jwksPromise
 
         const { payload } = await jwtVerify(idToken, jwks, {
           issuer: config.issuer,
           audience: config.clientIds,
+          // Google + Apple ID tokens are RS256 — pin it.
+          algorithms: ['RS256'],
         })
         if (!payload.sub) throw new Error('missing sub')
 

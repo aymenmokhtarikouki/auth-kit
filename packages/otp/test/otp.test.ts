@@ -155,3 +155,41 @@ describe('senders', () => {
     expect((smses[0] as { body: string }).body).toContain('222222')
   })
 })
+
+describe('production hardening', () => {
+  it('refuses to construct with devCode when NODE_ENV=production', () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const { sender } = fakeSender()
+      expect(() =>
+        createOtpService({ store: createInMemoryOtpStore(), sender, options: { devCode: '000000' } }),
+      ).toThrowError(/devCode must not be set/)
+    } finally {
+      process.env.NODE_ENV = prev
+    }
+  })
+
+  it('a locked code is BURNED — the correct code never verifies after the cap', async () => {
+    const { sender, sent } = fakeSender()
+    const store = createInMemoryOtpStore()
+    const otp = createOtpService({
+      store,
+      sender,
+      options: { maxAttempts: 2, resendCooldownSeconds: 0 },
+    })
+    await otp.request('EMAIL', 'x@x.co')
+    const realCode = sent[0]!.code
+
+    await expect(otp.verify('EMAIL', 'x@x.co', '000001')).rejects.toMatchObject({ code: 'INVALID_CODE' })
+    await expect(otp.verify('EMAIL', 'x@x.co', '000002')).rejects.toMatchObject({ code: 'INVALID_CODE' })
+    // Cap reached → locked AND consumed.
+    await expect(otp.verify('EMAIL', 'x@x.co', realCode)).rejects.toMatchObject({ code: 'TOO_MANY_ATTEMPTS' })
+    // Even the correct code is dead now (consumed → EXPIRED path).
+    await expect(otp.verify('EMAIL', 'x@x.co', realCode)).rejects.toMatchObject({ code: 'EXPIRED' })
+
+    // A fresh request works cleanly.
+    await otp.request('EMAIL', 'x@x.co')
+    await expect(otp.verify('EMAIL', 'x@x.co', sent[1]!.code)).resolves.toBeUndefined()
+  })
+})

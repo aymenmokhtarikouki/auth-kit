@@ -97,7 +97,7 @@ describe('access tokens & claims', () => {
 })
 
 describe('sessions — rotating strategy (multi-device)', () => {
-  it('refresh rotates: old token dies, new pair works', async () => {
+  it('refresh rotates; REPLAY of the used token kills the whole family', async () => {
     const { auth } = makeAuth()
     await auth.requestOtp('EMAIL', 'r@r.co')
     const s = await auth.verifyOtp({ channel: 'EMAIL', destination: 'r@r.co', code: '123456' })
@@ -105,13 +105,13 @@ describe('sessions — rotating strategy (multi-device)', () => {
     const next = await auth.refresh(s.refreshToken)
     expect(next.refreshToken).not.toBe(s.refreshToken)
 
-    // Replay of the used token → revoked.
+    // Replay of the used token = theft signal → revoked…
     await expect(auth.refresh(s.refreshToken)).rejects.toMatchObject({ code: 'SESSION_REVOKED' })
-    // The new one still works.
-    await expect(auth.refresh(next.refreshToken)).resolves.toBeTruthy()
+    // …and the WHOLE family dies with it — a thief must not keep a live one.
+    await expect(auth.refresh(next.refreshToken)).rejects.toMatchObject({ code: 'SESSION_REVOKED' })
   })
 
-  it('logout revokes; multiple devices stay independent', async () => {
+  it('logout revokes one device, others live on; replaying the dead token then kills all (fail closed)', async () => {
     const { auth } = makeAuth()
     await auth.requestOtp('EMAIL', 'm@m.co')
     const phone = await auth.verifyOtp({ channel: 'EMAIL', destination: 'm@m.co', code: '123456' })
@@ -119,8 +119,33 @@ describe('sessions — rotating strategy (multi-device)', () => {
     const laptop = await auth.verifyOtp({ channel: 'EMAIL', destination: 'm@m.co', code: '123456' })
 
     await auth.logout(phone.refreshToken)
+    // Logout itself never touches other devices.
+    const laptopNext = await auth.refresh(laptop.refreshToken)
+    // Presenting the logged-out token again is indistinguishable from theft →
+    // the family dies. Clients must drop tokens on logout.
     await expect(auth.refresh(phone.refreshToken)).rejects.toMatchObject({ code: 'SESSION_REVOKED' })
-    await expect(auth.refresh(laptop.refreshToken)).resolves.toBeTruthy() // untouched
+    await expect(auth.refresh(laptopNext.refreshToken)).rejects.toMatchObject({ code: 'SESSION_REVOKED' })
+  })
+})
+
+describe('token hardening', () => {
+  it('expired tokens surface TOKEN_EXPIRED (refresh me), not INVALID_TOKEN (forged)', async () => {
+    const { createTokenService } = await import('../src/tokens')
+    const t = createTokenService({ ...TOKENS, accessTtlSeconds: -1 })
+    const token = t.signAccess('u1', {})
+    expect(() => t.verifyAccess(token)).toThrowError(
+      expect.objectContaining({ code: 'TOKEN_EXPIRED', status: 401 }),
+    )
+  })
+
+  it("rejects alg:'none' forgeries (algorithm is pinned)", async () => {
+    const { createTokenService } = await import('../src/tokens')
+    const t = createTokenService(TOKENS)
+    const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url')
+    const forged = `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ sub: 'u1' })}.`
+    expect(() => t.verifyAccess(forged)).toThrowError(
+      expect.objectContaining({ code: 'INVALID_TOKEN' }),
+    )
   })
 })
 

@@ -56,7 +56,12 @@ export interface RotatingSessionStore {
   add(userId: string, jti: string, expiresAt: Date): Promise<void>
   isActive(jti: string): Promise<boolean>
   revoke(jti: string): Promise<void>
-  revokeAllForUser?(userId: string): Promise<void>
+  /**
+   * Kill the whole session family. Called on refresh-token REPLAY: a
+   * validly-signed token that is no longer active was already rotated or
+   * revoked — someone is holding a stolen copy, so every session dies.
+   */
+  revokeAllForUser(userId: string): Promise<void>
 }
 
 /**
@@ -101,6 +106,8 @@ export interface AuthSession<P = unknown> {
 export type AuthErrorCode =
   | 'INVALID_CREDENTIALS'
   | 'INVALID_TOKEN'
+  /** Signature valid but past exp — clients should refresh, not logout. */
+  | 'TOKEN_EXPIRED'
   | 'SESSION_REVOKED'
   | 'CONTACT_TAKEN'
   | 'USER_NOT_FOUND'

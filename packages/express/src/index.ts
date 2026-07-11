@@ -39,6 +39,8 @@ export function sendKitError(res: MinimalResponse, err: unknown): void {
     res.status(err.status).json({ error: { code: err.code, message: err.message } })
     return
   }
+  // Unknown = a bug or an outage — never swallow it silently.
+  console.error('[authkit/express] unhandled error:', err)
   res.status(500).json({ error: { code: 'InternalError', message: 'Something went wrong' } })
 }
 

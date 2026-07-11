@@ -39,13 +39,20 @@ export function createTokenService<C extends object>(options: TokenOptions): Tok
     verifyAccess(token) {
       try {
         const payload = jwt.verify(token, options.accessSecret, {
+          // Pin the algorithm — never let the token header pick it.
+          algorithms: ['HS256'],
           ...(options.issuer ? { issuer: options.issuer } : {}),
         }) as jwt.JwtPayload
         if (!payload.sub) throw new Error('missing sub')
         const { sub, iat, exp, iss, jti, ...claims } = payload
         return { userId: sub, claims: claims as C }
-      } catch {
-        throw new AuthError('INVALID_TOKEN', 401, 'Invalid or expired access token')
+      } catch (err) {
+        // Expired ≠ forged: clients refresh on TOKEN_EXPIRED, hard-logout on
+        // INVALID_TOKEN.
+        if (err instanceof jwt.TokenExpiredError) {
+          throw new AuthError('TOKEN_EXPIRED', 401, 'Access token expired — refresh the session')
+        }
+        throw new AuthError('INVALID_TOKEN', 401, 'Invalid access token')
       }
     },
 
@@ -64,12 +71,16 @@ export function createTokenService<C extends object>(options: TokenOptions): Tok
     verifyRefresh(token) {
       try {
         const payload = jwt.verify(token, options.refreshSecret, {
+          algorithms: ['HS256'],
           ...(options.issuer ? { issuer: options.issuer } : {}),
         }) as jwt.JwtPayload
         if (!payload.sub || !payload.jti) throw new Error('missing sub/jti')
         return { userId: payload.sub, jti: payload.jti }
-      } catch {
-        throw new AuthError('INVALID_TOKEN', 401, 'Invalid or expired refresh token')
+      } catch (err) {
+        if (err instanceof jwt.TokenExpiredError) {
+          throw new AuthError('TOKEN_EXPIRED', 401, 'Refresh token expired — sign in again')
+        }
+        throw new AuthError('INVALID_TOKEN', 401, 'Invalid refresh token')
       }
     },
   }

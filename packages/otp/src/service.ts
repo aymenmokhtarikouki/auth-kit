@@ -40,6 +40,14 @@ export function createOtpService(args: CreateOtpServiceArgs): OtpService {
   const options: OtpOptions = { ...DEFAULT_OTP_OPTIONS, ...args.options }
   const validate = options.validateDestination ?? defaultValidate
 
+  // Refuse to boot with the fixed dev code in production — otherwise every
+  // account is one publicly-known OTP away from takeover.
+  if (options.devCode && process.env.NODE_ENV === 'production') {
+    throw new Error(
+      '@authkit/otp: devCode must not be set when NODE_ENV=production — remove it from the production config.',
+    )
+  }
+
   function generateCode(): string {
     if (options.devCode) return options.devCode
     const max = 10 ** options.codeLength
@@ -88,6 +96,9 @@ export function createOtpService(args: CreateOtpServiceArgs): OtpService {
       throw new OtpError('EXPIRED', 401, 'Code expired or not found — request a new one')
     }
     if (otp.attempts >= options.maxAttempts) {
+      // Burn the locked code — it must never verify again, whatever happens
+      // to the attempt counter later.
+      await store.consume(otp.id)
       throw new OtpError('TOO_MANY_ATTEMPTS', 429, 'Too many attempts — request a new code')
     }
 

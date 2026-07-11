@@ -23,12 +23,25 @@ tokens age out.
 - `UserStore<Profile>` — find by email/phone/provider, create; `Profile` is
   whatever your app stores (names, roles…), carried through untouched.
 - `SessionStore` — per strategy: `rotating` wants a refresh-token table
-  (jti, revokedAt); `static` wants a single column on users.
+  (jti, revokedAt) and MUST implement `revokeAllForUser` — the kit calls it
+  when a rotated/revoked token is presented again (replay = theft → the whole
+  session family dies); `static` wants a single column on users.
 
 ## Choose a refresh strategy
 
 Both are production shapes: `rotating` (multi-device, replay-safe) or
 `static` (one token per user, no rotation). It's config, not a fork.
+
+## Production hardening notes
+
+- Rate-limit the OTP request endpoint per destination at your edge/router —
+  the kit enforces resend cooldown and per-code attempt caps, but request
+  volume (SMS cost abuse) is a deployment concern. Per-destination request
+  caps inside the kit are on the roadmap (needs a store extension).
+- `devCode` refuses to boot under NODE_ENV=production by design.
+- Access tokens are HS256 (one shared secret). If more than one service ever
+  verifies tokens, asymmetric signing (RS256/ES256 + JWKS) is the roadmap
+  path so resource servers never hold the signing key.
 
 ## Pairing with sibling kits
 

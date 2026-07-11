@@ -15,8 +15,9 @@ app's envelope (commonly `{ "data": … }`).
 | `EXPIRED` | 401 | Code expired/consumed/absent — request a new one. |
 | `TOO_MANY_ATTEMPTS` | 429 | Attempt cap hit — request a new code. |
 | `INVALID_CODE` | 401 | Wrong code (attempt counted). |
-| `INVALID_TOKEN` | 401 | Missing/invalid/expired access or refresh JWT. |
-| `SESSION_REVOKED` | 401 | Refresh token replayed/rotated-out/superseded → re-login. |
+| `INVALID_TOKEN` | 401 | Malformed or tampered JWT → hard logout. |
+| `TOKEN_EXPIRED` | 401 | Signature valid but past exp → refresh the session (access) / re-login (refresh). |
+| `SESSION_REVOKED` | 401 | Refresh token replayed/rotated-out/superseded → re-login. On the rotating strategy a replay also revokes EVERY session of that user (theft response). |
 | `CONTACT_TAKEN` | 409 | Email/phone already belongs to another account. |
 | `INVALID_CREDENTIALS` | 401 | Password login failed (never says which part). |
 

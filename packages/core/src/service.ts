@@ -197,6 +197,10 @@ export function createAuthService<P = unknown, C extends object = Record<string,
       if (session.mode === 'rotating') {
         // Rotate: the used token dies, a fresh pair is born.
         if (!(await session.store.isActive(jti))) {
+          // Replay: the token's signature verified but the jti is no longer
+          // active — it was already rotated or revoked, so someone is holding
+          // a stolen copy. Kill the whole family, not just this request.
+          await session.store.revokeAllForUser(userId)
           throw new AuthError('SESSION_REVOKED', 401, 'Session expired — log in again')
         }
         await session.store.revoke(jti)
