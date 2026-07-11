@@ -1,8 +1,8 @@
 /**
- * Identity types and seams. `P` = the app's user-profile payload (yuma:
- * firstName/lastName/isConsumer…; lineo: name/role…) — the kit carries it
- * through registration untouched. `C` = extra JWT claims (lineo: role,
- * activeSalonId…). Addresses/avatars/etc. are NOT identity — they live in
+ * Identity types and seams. `P` = the app's user-profile payload (e.g.
+ * firstName/lastName or name/role) — the kit carries it
+ * through registration untouched. `C` = extra JWT claims (e.g. role,
+ * activeTenantId). Addresses/avatars/etc. are NOT identity — they live in
  * the app (or @authkit/addresses) and compose via hooks.
  */
 
@@ -41,7 +41,7 @@ export interface UserStore<P = unknown> {
   linkProvider(userId: string, provider: string, subject: string): Promise<void>
   /** Optional — enables the OTP-verified changeContact flow. */
   updateContact?(userId: string, patch: { email?: string; phone?: string }): Promise<AuthUser<P>>
-  /** Optional — enables password login (legacy/lineo compat; OTP is the primary flow). */
+  /** Optional — enables password login (legacy compatibility; OTP is the primary flow). */
   getPasswordHash?(userId: string): Promise<string | null>
   setPasswordHash?(userId: string, hash: string): Promise<void>
 }
@@ -49,7 +49,7 @@ export interface UserStore<P = unknown> {
 // ── Sessions ─────────────────────────────────────────────────────────────────
 
 /**
- * Rotating strategy (yuma): every refresh revokes the used token and issues a
+ * Rotating strategy: every refresh revokes the used token and issues a
  * new pair; multiple devices = multiple live tokens. Store tracks jti values.
  */
 export interface RotatingSessionStore {
@@ -60,7 +60,7 @@ export interface RotatingSessionStore {
 }
 
 /**
- * Static strategy (lineo): ONE refresh token per user stored as-is; refresh
+ * Static strategy: ONE refresh token per user stored as-is; refresh
  * returns a new access token but the SAME refresh token (deliberately no
  * rotation — avoids the desync window on flaky mobile networks).
  */

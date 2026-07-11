@@ -2,7 +2,7 @@
  * @authkit/express — HTTP adapter for @authkit/core.
  *
  * Structurally typed (no @types/express dependency) so it works on Express 4
- * (yuma) and Express 5 (lineo). Envelope-agnostic: pass `wrapResponse` to
+ * and Express 5. Envelope-agnostic: pass `wrapResponse` to
  * apply your app's convention (e.g. createApiResponse).
  *
  * Quick start:

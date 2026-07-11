@@ -1,10 +1,10 @@
 # auth-kit
 
-Shared identity toolkit for yuma, lineo and future apps. **OTP-first**: email/
+Shared identity toolkit. **OTP-first**: email/
 phone codes are the primary login *and* registration (verify = find-or-create) —
 no passwords required anywhere. Google & Apple sign-in via ID-token verification
 with account linking. Storage-agnostic: the kit owns **behavior**, your app owns
-its tables through small store interfaces (Prisma in yuma, raw pg in lineo —
+its tables through small store interfaces (Prisma, raw SQL —
 same pattern as clustermap-kit).
 
 Consume as a **git submodule** at `vendor/auth-kit` with `file:` dependencies.
@@ -14,7 +14,7 @@ Consume as a **git submodule** at `vendor/auth-kit` with `file:` dependencies.
 | Package | What | Deps |
 | --- | --- | --- |
 | `@authkit/otp` | Code engine: generate → bcrypt-hash → deliver → verify. TTL, attempt cap, resend cooldown, dev master code. Seams: `OtpStore`, `OtpSender` (+ ready SMTP/Twilio adapter factories that take YOUR configured client). | bcryptjs |
-| `@authkit/core` | Sessions & flows: OTP login/registration, Google/Apple (`IdTokenVerifier` via JWKS), optional password compat, JWT access tokens with app claims, **pluggable refresh** — `rotating` (multi-device, yuma) or `static` (single token, no rotation, lineo) — OTP-verified contact change, `onUserCreated`/`onLogin` hooks. Seams: `UserStore<Profile>`, session stores. | otp, jsonwebtoken, jose, bcryptjs |
+| `@authkit/core` | Sessions & flows: OTP login/registration, Google/Apple (`IdTokenVerifier` via JWKS), optional password compat, JWT access tokens with app claims, **pluggable refresh** — `rotating` (multi-device) or `static` (single token, no rotation) — OTP-verified contact change, `onUserCreated`/`onLogin` hooks. Seams: `UserStore<Profile>`, session stores. | otp, jsonwebtoken, jose, bcryptjs |
 | `@authkit/express` | Express 4/5 middleware (`requireAuth`, `optionalAuth`, `requireClaims`), standard endpoint handlers, kit-error→HTTP mapping. Envelope-agnostic. | core, otp |
 
 > The **address book + geocoding** moved to their own repo —
@@ -27,7 +27,7 @@ Consume as a **git submodule** at `vendor/auth-kit` with `file:` dependencies.
 | Doc | Contents |
 | --- | --- |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Flow diagrams, session strategies, provider verification, design decisions (why addresses are separate, why no password requirement). |
-| [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Submodule setup, store recipes for yuma (Prisma) and lineo (pg), migration rules that keep existing tokens valid. |
+| [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Install, store recipes (Prisma and raw SQL), migration rules that keep existing tokens valid. |
 | [`contracts/API.md`](contracts/API.md) | The HTTP contract — Flutter/web clients implement the same shapes. |
 
 ## Quick start (backend)

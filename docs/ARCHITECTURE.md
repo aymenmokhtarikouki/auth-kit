@@ -7,8 +7,8 @@ For wiring recipes see [`INTEGRATION.md`](INTEGRATION.md); for wire shapes see
 
 **The kit owns behavior; the app owns storage.** Every package exposes small
 store interfaces the app implements on its OWN schema. No ORM, no migrations,
-no table ownership in the kit — which is also the migration story: yuma's
-stores map to its existing Prisma models, lineo's to its existing pg tables,
+no table ownership in the kit — which is also the migration story: your
+stores map to your existing models and tables,
 and because tokens are jsonwebtoken HS256 with YOUR secrets, sessions issued
 before adoption keep working.
 
@@ -44,7 +44,7 @@ BOTH request and verify.
 
 ## Sessions — two real strategies, one interface
 
-| | `rotating` (yuma) | `static` (lineo) |
+| | `rotating` | `static` |
 | --- | --- | --- |
 | Store | one row per live session (`jti`, expiry) | one token column on the user |
 | Refresh | verify JWT → jti active? → revoke it, issue NEW pair | verify JWT → equals stored? → new ACCESS only, same refresh |
@@ -61,13 +61,13 @@ Both reduce to *verify a provider-signed JWT against their JWKS* (`jose`,
 lazily imported so CJS apps work): issuer + audience (your client ids) checked,
 then: ① linked account? sign in. ② same email exists? link provider to it.
 ③ else create + link (`isNewUser: true`). The `IdTokenVerifier` seam means
-lineo can keep firebase-admin verification unchanged, and web redirect OAuth
-(yuma's passport flow) feeds its callback `id_token` into the same function —
+apps on firebase-admin keep their verification unchanged, and web redirect OAuth
+(a passport flow) feeds its callback `id_token` into the same function —
 the kit never needs Express sessions or redirect plumbing.
 
 ## Contact change (OTP-verified)
 
-Generalized from yuma's production flow: request sends the code to the NEW
+Generalized from a production flow: request sends the code to the NEW
 destination (proving control), taken-destination checks run at request AND
 confirm (race window), and the same OTP engine enforces TTL/attempts — one
 security surface, not two.

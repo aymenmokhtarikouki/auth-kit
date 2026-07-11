@@ -2,11 +2,12 @@
   "name": "@authkit/core",
   "version": "1.0.0",
   "description": "OTP-first identity & sessions: email/phone code login (find-or-create), Google & Apple ID-token sign-in with account linking, JWT access tokens, pluggable refresh strategies (rotating multi-device / static single-token), OTP-verified contact change. Storage-agnostic.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -28,5 +29,23 @@
     "type": "git",
     "url": "git+https://github.com/aymenmokhtarikouki/auth-kit.git",
     "directory": "packages/core"
-  }
+  },
+  "keywords": [
+    "auth",
+    "otp",
+    "jwt",
+    "authentication",
+    "passwordless",
+    "oauth",
+    "core"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "homepage": "https://github.com/aymenmokhtarikouki/auth-kit#readme",
+  "bugs": {
+    "url": "https://github.com/aymenmokhtarikouki/auth-kit/issues"
+  },
+  "author": "Aymen Mokhtari"
 }

@@ -2,11 +2,12 @@
   "name": "@authkit/otp",
   "version": "1.0.0",
   "description": "One-time-code engine: generate → hash → deliver → verify, with TTL, attempt caps, resend cooldown and a dev master code. Storage and delivery are seams (OtpStore / OtpSender).",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -22,5 +23,23 @@
     "type": "git",
     "url": "git+https://github.com/aymenmokhtarikouki/auth-kit.git",
     "directory": "packages/otp"
-  }
+  },
+  "keywords": [
+    "auth",
+    "otp",
+    "jwt",
+    "authentication",
+    "passwordless",
+    "oauth",
+    "otp"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "homepage": "https://github.com/aymenmokhtarikouki/auth-kit#readme",
+  "bugs": {
+    "url": "https://github.com/aymenmokhtarikouki/auth-kit/issues"
+  },
+  "author": "Aymen Mokhtari"
 }

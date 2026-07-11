@@ -1,7 +1,7 @@
 /**
  * Seams and shapes for the OTP engine. The engine never touches a database or
  * a mail/SMS provider directly — apps implement `OtpStore` on their own table
- * (yuma `OtpCode`, lineo `otp_codes`) and plug an `OtpSender`.
+ * (any table with destination/code/expiry/attempts columns) and plug an `OtpSender`.
  */
 
 export type OtpChannel = 'EMAIL' | 'PHONE'

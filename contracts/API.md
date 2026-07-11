@@ -2,7 +2,7 @@
 
 The wire shapes every backend exposes (via `@authkit/express` or hand-rolled)
 and every client (Flutter, web) implements. Payloads may be wrapped in the
-app's envelope (yuma/lineo: `{ "data": … }`).
+app's envelope (commonly `{ "data": … }`).
 
 ## Errors
 
@@ -45,9 +45,9 @@ session payload as above.
 
 ### `POST /auth/refresh` — `{ refreshToken }`
 → `{ token, refreshToken, expiresInSeconds }`.
-- **rotating** apps (yuma): `refreshToken` is NEW; the used one is dead — replay
+- **rotating** apps: `refreshToken` is NEW; the used one is dead — replay
   → `SESSION_REVOKED`. Store the new one atomically.
-- **static** apps (lineo): `refreshToken` is the SAME one back; keep using it.
+- **static** apps: `refreshToken` is the SAME one back; keep using it.
 
 ### `POST /auth/logout` — `{ refreshToken }` → `{ ok: true }` (always 200).
 

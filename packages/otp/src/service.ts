@@ -1,5 +1,5 @@
 /**
- * The OTP engine. Semantics ported from yuma's production otp.service:
+ * The OTP engine. Semantics extracted from a production OTP service:
  * bcrypt-hashed codes, TTL, attempt cap, resend cooldown, dev master code,
  * destination normalization — all tunable via OtpOptions.
  */

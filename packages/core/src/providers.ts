@@ -5,7 +5,7 @@
  *
  * Works for Flutter (native sign-in SDKs return these tokens), web one-tap,
  * AND redirect OAuth (the callback's id_token feeds the same verifier).
- * Lineo can keep firebase-admin instead: any `IdTokenVerifier` plugs in.
+ * Apps already on firebase-admin can keep it: any `IdTokenVerifier` plugs in.
  *
  * `jose` is ESM-only, so it is loaded lazily via dynamic import — CJS apps
  * (both backends) stay compatible.

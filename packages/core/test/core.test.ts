@@ -96,7 +96,7 @@ describe('access tokens & claims', () => {
   })
 })
 
-describe('sessions — rotating strategy (yuma model)', () => {
+describe('sessions — rotating strategy (multi-device)', () => {
   it('refresh rotates: old token dies, new pair works', async () => {
     const { auth } = makeAuth()
     await auth.requestOtp('EMAIL', 'r@r.co')
@@ -124,7 +124,7 @@ describe('sessions — rotating strategy (yuma model)', () => {
   })
 })
 
-describe('sessions — static strategy (lineo model)', () => {
+describe('sessions — static strategy (single token)', () => {
   it('refresh returns the SAME refresh token, new access token', async () => {
     const { auth } = makeAuth({
       session: { mode: 'static', store: createInMemoryStaticSessionStore() },

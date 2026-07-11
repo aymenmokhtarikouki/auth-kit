@@ -1,117 +1,57 @@
-# Integration guide
+# Integrating auth-kit
 
-Same submodule pattern as clustermap-kit (see that repo's INTEGRATION.md for
-the general submodule/deploy mechanics).
-
-## 1. Add + build
+## Install
 
 ```bash
-git submodule add git@github.com:aymenmokhtarikouki/auth-kit.git vendor/auth-kit
-npm --prefix vendor/auth-kit run setup     # install packages-only + build dist
+npm install @authkit/otp                # standalone OTP engine
+npm install @authkit/core               # identity: tokens, flows, providers
+npm install @authkit/express            # optional middleware + route factories
 ```
 
-`package.json` — **always include every `@authkit/*` package you import AND
-`@authkit/otp` + `@authkit/core` when using express** (file: deps only exist
-in-repo; npm 404s otherwise — same gotcha as clustermap):
+## The migration guarantee: existing tokens stay valid
 
-```jsonc
-"dependencies": {
-  "@authkit/otp":     "file:vendor/auth-kit/packages/otp",
-  "@authkit/core":    "file:vendor/auth-kit/packages/core",
-  "@authkit/express": "file:vendor/auth-kit/packages/express"
-},
-"scripts": { "authkit:setup": "npm --prefix vendor/auth-kit run setup" }
-```
+`createTokenService` signs/verifies HS256 JWTs with jsonwebtoken — the same
+shape most hand-rolled apps use. **Keep your existing secrets** and every
+access token issued before the swap keeps verifying. If your legacy payload
+differs (e.g. `{ userId }` instead of `sub`), wrap verification in a
+dual-accept: try the kit first, fall back to the legacy decode until the old
+tokens age out.
 
-TypeScript: add the one-time Request augmentation (see `examples/demo-server/server.ts` top).
+## Implement the stores
 
-## 2. Migration rules (KEEP EXISTING SESSIONS VALID)
+- `OtpStore` — one table: destination, hashed code, expiry, attempts, used.
+- `UserStore<Profile>` — find by email/phone/provider, create; `Profile` is
+  whatever your app stores (names, roles…), carried through untouched.
+- `SessionStore` — per strategy: `rotating` wants a refresh-token table
+  (jti, revokedAt); `static` wants a single column on users.
 
-1. **Reuse your current JWT secrets** in `tokens.accessSecret/refreshSecret`.
-2. Match your current TTLs (`accessTtlSeconds`, `refreshTtlSeconds`).
-3. Keep your `claims` shape identical to today's payload (lineo: role,
-   isManager, activeSalonId… — provide them in the `claims` callback).
-4. Adopt endpoint-by-endpoint behind the SAME URLs; stores read/write the
-   SAME tables, so old and new code can coexist during the migration.
+## Choose a refresh strategy
 
-## 3. yuma_backend (Prisma) store recipes
+Both are production shapes: `rotating` (multi-device, replay-safe) or
+`static` (one token per user, no rotation). It's config, not a fork.
 
-```ts
-// OtpStore → model OtpCode
-const otpStore: OtpStore = {
-  create: (d) => prisma.otpCode.create({ data: d }),
-  findLatest: (channel, destination) =>
-    prisma.otpCode.findFirst({ where: { channel, destination }, orderBy: { createdAt: 'desc' } }),
-  incrementAttempts: (id) =>
-    prisma.otpCode.update({ where: { id }, data: { attempts: { increment: 1 } } }).then(() => {}),
-  consume: (id) =>
-    prisma.otpCode.update({ where: { id }, data: { consumedAt: new Date() } }).then(() => {}),
-}
+## Pairing with sibling kits
 
-// UserStore<Profile> → model User (+ OAuthAccount for providers)
-//   findByEmail/Phone/Id → prisma.user.findUnique
-//   findByProvider → prisma.oAuthAccount.findUnique({ provider_subject }) include user
-//   create → prisma.user.create (profile.firstName/lastName/isConsumer)
-//   linkProvider → prisma.oAuthAccount.create
-//   updateContact → prisma.user.update  (the /users/me/contact flow)
+Kits pair **by shape, never by import** — every integration point is a
+parameter interface a sibling kit satisfies structurally. Pass the real kit,
+your own service, or a stub in tests.
 
-// RotatingSessionStore → model RefreshToken
-//   add → create { jti, userId, expiresAt } · isActive → find where revokedAt null & not expired
-//   revoke → update { revokedAt: now } · revokeAllForUser → updateMany
+- `@chatkit/socketio` accepts the TokenService as its handshake `identity`.
+- Every kit's express handlers read the `req.auth.userId` that
+  `@authkit/express` middleware sets.
 
-// AddressStore recipes → see location-kit/docs/INTEGRATION.md
-```
+## Migrating from an existing implementation
 
-Sessions: `{ mode: 'rotating', store }`. OTP senders: wrap the existing
-transactionalMailer + Twilio client with `smtpEmailSender` / `twilioSmsSender`.
-`OTP_DEV_CODE` env → `options.devCode` (unset in prod, as today).
+The kits were extracted from production systems, and these rules kept those
+migrations safe:
 
-## 4. lineo-backend (raw pg) store recipes
-
-```ts
-// OtpStore → otp_codes table (NOTE: kit stores bcrypt hashes in `code`-like
-// column — codes are 10-min-lived, so switching to hashed needs no migration;
-// rename/reuse the column as code_hash.)
-const otpStore: OtpStore = {
-  create: async (d) => (await pool.query(
-    `INSERT INTO otp_codes (channel, destination, code_hash, expires_at)
-     VALUES ($1,$2,$3,$4) RETURNING *`, [d.channel, d.destination, d.codeHash, d.expiresAt],
-  )).rows[0].map(rowToRecord),
-  findLatest: async (c, dest) => …ORDER BY created_at DESC LIMIT 1…,
-  …
-}
-
-// StaticSessionStore → users.refresh_token column (current model, unchanged)
-const sessionStore: StaticSessionStore = {
-  set: (userId, token) => pool.query(`UPDATE users SET refresh_token=$2 WHERE id=$1`, [userId, token]),
-  get: async (userId) => (await pool.query(`SELECT refresh_token FROM users WHERE id=$1`, [userId])).rows[0]?.refresh_token ?? null,
-}
-// session: { mode: 'static', store: sessionStore }  ← deliberately no rotation
-
-// Google: keep firebase-admin — any IdTokenVerifier plugs in:
-const googleViaFirebase: IdTokenVerifier = {
-  verify: async (t) => {
-    const d = await admin.auth().verifyIdToken(t)
-    return { provider: 'google', subject: d.uid, email: d.email?.toLowerCase() ?? null, emailVerified: !!d.email_verified, name: d.name ?? null }
-  },
-}
-
-// claims: (u) => ({ role: u.profile.role, isManager: …, activeSalonId: … })
-// hooks.onUserCreated: stylist/salon-code branch, login_history insert via onLogin
-```
-
-## 5. Flutter apps
-
-No package — implement [`contracts/API.md`](../contracts/API.md). Yuma's
-existing auth endpoints already match the OTP + refresh shapes closely.
-
-## 6. Update flow
-
-```bash
-cd vendor/auth-kit && git pull origin main && cd ../.. \
-  && npm run authkit:setup && git add vendor/auth-kit && git commit -m "chore: bump auth-kit"
-```
-
-Deploys/CI: `git submodule update --init` + `npm run authkit:setup` BEFORE the
-consumer `npm install` (yuma's deploy.sh already does this for clustermap —
-add the same line for auth-kit).
+1. **Never rewrite a working flow in one step.** Keep your endpoint URLs,
+   response envelopes and (for realtime) socket event names byte-identical;
+   swap the implementation underneath, one endpoint at a time.
+2. **Data stays put.** The store seams map onto your existing tables — new
+   capabilities need at most additive columns, never a data migration.
+3. **Delete the superseded code in the same change.** Two implementations of
+   the same behavior is how drift starts.
+4. Where the kit enforces domain rules through policy hooks, your hooks may
+   THROW your app's own error types — the kit re-throws them untouched, so
+   your API's error contract survives the swap.

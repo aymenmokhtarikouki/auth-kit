@@ -1,8 +1,8 @@
 /**
  * The auth flows. OTP-FIRST: email/phone codes are the primary login AND
- * registration (verify = find-or-create, exactly yuma's production flow).
+ * registration (verify = find-or-create — the production flow this kit was extracted from).
  * Google/Apple sign in via verified ID tokens with account linking.
- * Passwords are optional (legacy/lineo compat) — no flow requires one.
+ * Passwords are optional (legacy compatibility) — no flow requires one.
  */
 import bcrypt from 'bcryptjs'
 import type { OtpChannel, OtpService } from '@authkit/otp'
@@ -195,7 +195,7 @@ export function createAuthService<P = unknown, C extends object = Record<string,
       const { userId, jti } = tokens.verifyRefresh(refreshToken)
 
       if (session.mode === 'rotating') {
-        // Rotate: the used token dies, a fresh pair is born (yuma model).
+        // Rotate: the used token dies, a fresh pair is born.
         if (!(await session.store.isActive(jti))) {
           throw new AuthError('SESSION_REVOKED', 401, 'Session expired — log in again')
         }
@@ -208,7 +208,7 @@ export function createAuthService<P = unknown, C extends object = Record<string,
         return { token: access, refreshToken: next.token, expiresInSeconds: tokens.accessTtlSeconds }
       }
 
-      // Static: same refresh token comes back — deliberately no rotation (lineo model).
+      // Static: same refresh token comes back — deliberately no rotation.
       const current = await session.store.get(userId)
       if (current !== refreshToken) {
         throw new AuthError('SESSION_REVOKED', 401, 'Session expired — log in again')
@@ -235,7 +235,7 @@ export function createAuthService<P = unknown, C extends object = Record<string,
 
     verifyAccess: (token) => tokens.verifyAccess(token),
 
-    // ── OTP-verified contact change (yuma's flow, generalized) ───────────────
+    // ── OTP-verified contact change ───────────────────────────────────────────
     async requestContactChange(userId, channel, destination) {
       const otp = requireOtp()
       const normalized = otp.normalize(channel, destination)
