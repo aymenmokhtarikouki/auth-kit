@@ -3,9 +3,9 @@
 ## Install
 
 ```bash
-npm install @authkit/otp                # standalone OTP engine
-npm install @authkit/core               # identity: tokens, flows, providers
-npm install @authkit/express            # optional middleware + route factories
+npm install @aymenkits/auth-otp                # standalone OTP engine
+npm install @aymenkits/auth-core               # identity: tokens, flows, providers
+npm install @aymenkits/auth-express            # optional middleware + route factories
 ```
 
 ## The migration guarantee: existing tokens stay valid
@@ -49,9 +49,9 @@ Kits pair **by shape, never by import** — every integration point is a
 parameter interface a sibling kit satisfies structurally. Pass the real kit,
 your own service, or a stub in tests.
 
-- `@chatkit/socketio` accepts the TokenService as its handshake `identity`.
+- `@aymenkits/chat-socketio` accepts the TokenService as its handshake `identity`.
 - Every kit's express handlers read the `req.auth.userId` that
-  `@authkit/express` middleware sets.
+  `@aymenkits/auth-express` middleware sets.
 
 ## Migrating from an existing implementation
 

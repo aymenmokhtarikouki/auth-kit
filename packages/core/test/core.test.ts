@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createOtpService, createInMemoryOtpStore, type OtpSender } from '@authkit/otp'
+import { createOtpService, createInMemoryOtpStore, type OtpSender } from '@aymenkits/auth-otp'
 import {
   createAuthService,
   createInMemoryUserStore,
@@ -23,7 +23,7 @@ function makeAuth(overrides: Partial<Parameters<typeof createAuthService<Profile
     store: createInMemoryOtpStore(),
     sender: silentSender,
     // Cooldown off — tests re-request codes rapidly; cooldown has its own
-    // coverage in @authkit/otp.
+    // coverage in @aymenkits/auth-otp.
     options: { devCode: '123456', resendCooldownSeconds: 0 },
   })
   const auth = createAuthService<Profile, { role?: string }>({

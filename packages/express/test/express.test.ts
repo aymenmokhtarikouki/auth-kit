@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { createOtpService, createInMemoryOtpStore } from '@authkit/otp'
+import { createOtpService, createInMemoryOtpStore } from '@aymenkits/auth-otp'
 import {
   createAuthService,
   createInMemoryUserStore,
   createInMemoryRotatingSessionStore,
-} from '@authkit/core'
+} from '@aymenkits/auth-core'
 import { createAuthMiddleware, createAuthHandlers, type MinimalRequest } from '../src/index'
 
 function makeAuth() {

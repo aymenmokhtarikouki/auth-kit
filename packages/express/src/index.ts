@@ -1,5 +1,5 @@
 /**
- * @authkit/express — HTTP adapter for @authkit/core.
+ * @aymenkits/auth-express — HTTP adapter for @aymenkits/auth-core.
  *
  * Structurally typed (no @types/express dependency) so it works on Express 4
  * and Express 5. Envelope-agnostic: pass `wrapResponse` to
@@ -12,9 +12,9 @@
  *   router.post('/auth/otp/verify', handlers.otpVerify)
  *   router.get('/users/me', requireAuth, myMeController)
  */
-import type { AuthService } from '@authkit/core'
-import { AuthError } from '@authkit/core'
-import { OtpError, type OtpChannel } from '@authkit/otp'
+import type { AuthService } from '@aymenkits/auth-core'
+import { AuthError } from '@aymenkits/auth-core'
+import { OtpError, type OtpChannel } from '@aymenkits/auth-otp'
 
 // ── Structural HTTP types (Express 4 + 5 compatible) ─────────────────────────
 

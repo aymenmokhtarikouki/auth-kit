@@ -1,11 +1,11 @@
-# @authkit/otp
+# @aymenkits/auth-otp
 
 OTP engine: generate → bcrypt-hash → store → verify/consume, with TTL, attempt caps, resend cooldown and a dev master-code mode. Channel-agnostic (EMAIL / PHONE).
 
 ## Install
 
 ```bash
-npm install @authkit/otp
+npm install @aymenkits/auth-otp
 ```
 
 Installs with it: `bcryptjs` (automatic dependency).
@@ -22,7 +22,7 @@ app implements on its own stack.
 ## Quick example
 
 ```ts
-import { createOtpService, channelRouter } from '@authkit/otp'
+import { createOtpService, channelRouter } from '@aymenkits/auth-otp'
 
 const otp = createOtpService({ store, sender: channelRouter({ PHONE: sms, EMAIL: mail }) })
 await otp.request('PHONE', '+4915112345678')
@@ -31,7 +31,7 @@ await otp.verify('PHONE', '+4915112345678', '123456')
 
 ## Pairs with
 
-- `@authkit/core` consumes it for OTP login/registration
+- `@aymenkits/auth-core` consumes it for OTP login/registration
 - usable standalone (contact-change verification, step-up auth)
 
 Kits pair **by shape, never by import** — pass the sibling kit, your own

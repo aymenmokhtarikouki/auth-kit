@@ -9,11 +9,11 @@
     "examples/*"
   ],
   "scripts": {
-    "setup": "npm install --include-workspace-root -w @authkit/otp -w @authkit/core -w @authkit/express && npm run build",
-    "build": "npm run build -w @authkit/otp -w @authkit/core -w @authkit/express",
+    "setup": "npm install --include-workspace-root -w @aymenkits/auth-otp -w @aymenkits/auth-core -w @aymenkits/auth-express && npm run build",
+    "build": "npm run build -w @aymenkits/auth-otp -w @aymenkits/auth-core -w @aymenkits/auth-express",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
-    "demo": "npm run dev -w @authkit/demo-server"
+    "demo": "npm run dev -w @aymenkits/auth-demo-server"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

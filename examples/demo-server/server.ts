@@ -11,17 +11,17 @@
  * (The address book + geocoding demo lives in location-kit.)
  */
 import express from 'express'
-import { createOtpService, createInMemoryOtpStore } from '@authkit/otp'
+import { createOtpService, createInMemoryOtpStore } from '@aymenkits/auth-otp'
 import {
   createAuthService,
   createInMemoryUserStore,
   createInMemoryRotatingSessionStore,
-} from '@authkit/core'
-import { createAuthMiddleware, createAuthHandlers } from '@authkit/express'
+} from '@aymenkits/auth-core'
+import { createAuthMiddleware, createAuthHandlers } from '@aymenkits/auth-express'
 
 // One-time declaration merge so Express's Request knows about the `auth`
 // field the authkit middleware attaches. Every consumer app adds this once
-// (documented in docs/INTEGRATION.md) — @authkit/express itself deliberately
+// (documented in docs/INTEGRATION.md) — @aymenkits/auth-express itself deliberately
 // carries no @types/express dependency.
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

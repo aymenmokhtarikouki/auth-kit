@@ -44,7 +44,7 @@ export function createOtpService(args: CreateOtpServiceArgs): OtpService {
   // account is one publicly-known OTP away from takeover.
   if (options.devCode && process.env.NODE_ENV === 'production') {
     throw new Error(
-      '@authkit/otp: devCode must not be set when NODE_ENV=production — remove it from the production config.',
+      '@aymenkits/auth-otp: devCode must not be set when NODE_ENV=production — remove it from the production config.',
     )
   }
 

@@ -1,12 +1,12 @@
 /**
- * @authkit/core — OTP-first identity & sessions.
+ * @aymenkits/auth-core — OTP-first identity & sessions.
  *
  * Quick start:
  *   const auth = createAuthService<Profile, Claims>({
  *     users: myUserStore,
  *     session: { mode: 'rotating', store: myRefreshTokenStore }, // or 'static'
  *     tokens: { accessSecret, refreshSecret },
- *     otp: createOtpService({ store, sender }),                   // @authkit/otp
+ *     otp: createOtpService({ store, sender }),                   // @aymenkits/auth-otp
  *     providers: {
  *       google: googleIdTokenVerifier({ clientIds: [GOOGLE_CLIENT_ID] }),
  *       apple: appleIdTokenVerifier({ clientIds: [APPLE_SERVICE_ID] }),
@@ -48,4 +48,4 @@ export {
 } from './memory'
 
 // Re-export the OTP surface consumers typically need alongside auth.
-export type { OtpChannel, OtpService } from '@authkit/otp'
+export type { OtpChannel, OtpService } from '@aymenkits/auth-otp'

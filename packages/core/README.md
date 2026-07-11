@@ -1,14 +1,14 @@
-# @authkit/core
+# @aymenkits/auth-core
 
 OTP-first identity: token service (JWT HS256, drop-in compatible with hand-rolled jsonwebtoken apps), rotating OR static refresh strategies, password login (optional), Google/Apple ID-token sign-in, find-or-create flows and OTP-verified contact change.
 
 ## Install
 
 ```bash
-npm install @authkit/core
+npm install @aymenkits/auth-core
 ```
 
-Installs with it: `@authkit/otp`, `bcryptjs`, `jsonwebtoken`, `jose` (automatic dependencies).
+Installs with it: `@aymenkits/auth-otp`, `bcryptjs`, `jsonwebtoken`, `jose` (automatic dependencies).
 
 ## You provide
 
@@ -23,7 +23,7 @@ app implements on its own stack.
 ## Quick example
 
 ```ts
-import { createTokenService, createAuthFlows } from '@authkit/core'
+import { createTokenService, createAuthFlows } from '@aymenkits/auth-core'
 
 const tokens = createTokenService({ accessSecret, refreshSecret })
 const auth = createAuthFlows({ users, sessions, tokens, otp, strategy: 'rotating' })
@@ -32,8 +32,8 @@ const session = await auth.verifyOtp({ channel: 'PHONE', destination, code })
 
 ## Pairs with
 
-- `@authkit/express` for routes/middleware
-- `@chatkit/socketio` accepts the TokenService as its handshake `identity`
+- `@aymenkits/auth-express` for routes/middleware
+- `@aymenkits/chat-socketio` accepts the TokenService as its handshake `identity`
 
 Kits pair **by shape, never by import** — pass the sibling kit, your own
 service, or a stub in tests.

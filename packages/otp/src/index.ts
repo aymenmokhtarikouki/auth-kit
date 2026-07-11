@@ -1,5 +1,5 @@
 /**
- * @authkit/otp — one-time-code engine with storage + delivery seams.
+ * @aymenkits/auth-otp — one-time-code engine with storage + delivery seams.
  *
  * Quick start:
  *   const otp = createOtpService({

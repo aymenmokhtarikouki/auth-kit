@@ -13,13 +13,13 @@ Consume as a **git submodule** at `vendor/auth-kit` with `file:` dependencies.
 
 | Package | What | Deps |
 | --- | --- | --- |
-| `@authkit/otp` | Code engine: generate → bcrypt-hash → deliver → verify. TTL, attempt cap, resend cooldown, dev master code. Seams: `OtpStore`, `OtpSender` (+ ready SMTP/Twilio adapter factories that take YOUR configured client). | bcryptjs |
-| `@authkit/core` | Sessions & flows: OTP login/registration, Google/Apple (`IdTokenVerifier` via JWKS), optional password compat, JWT access tokens with app claims, **pluggable refresh** — `rotating` (multi-device) or `static` (single token, no rotation) — OTP-verified contact change, `onUserCreated`/`onLogin` hooks. Seams: `UserStore<Profile>`, session stores. | otp, jsonwebtoken, jose, bcryptjs |
-| `@authkit/express` | Express 4/5 middleware (`requireAuth`, `optionalAuth`, `requireClaims`), standard endpoint handlers, kit-error→HTTP mapping. Envelope-agnostic. | core, otp |
+| `@aymenkits/auth-otp` | Code engine: generate → bcrypt-hash → deliver → verify. TTL, attempt cap, resend cooldown, dev master code. Seams: `OtpStore`, `OtpSender` (+ ready SMTP/Twilio adapter factories that take YOUR configured client). | bcryptjs |
+| `@aymenkits/auth-core` | Sessions & flows: OTP login/registration, Google/Apple (`IdTokenVerifier` via JWKS), optional password compat, JWT access tokens with app claims, **pluggable refresh** — `rotating` (multi-device) or `static` (single token, no rotation) — OTP-verified contact change, `onUserCreated`/`onLogin` hooks. Seams: `UserStore<Profile>`, session stores. | otp, jsonwebtoken, jose, bcryptjs |
+| `@aymenkits/auth-express` | Express 4/5 middleware (`requireAuth`, `optionalAuth`, `requireClaims`), standard endpoint handlers, kit-error→HTTP mapping. Envelope-agnostic. | core, otp |
 
 > The **address book + geocoding** moved to their own repo —
 > [location-kit](https://github.com/aymenmokhtarikouki/location-kit)
-> (`@locationkit/addresses`). Identity and location are independent kits that
+> (`@aymenkits/location-addresses`). Identity and location are independent kits that
 > compose in your endpoints.
 
 ## Documentation

@@ -1,19 +1,19 @@
-# @authkit/express
+# @aymenkits/auth-express
 
 Express 4/5 middleware (requireAuth / optionalAuth / requireRole) and route factories for the standard auth endpoints. Envelope-agnostic, structural typing — no express dependency.
 
 ## Install
 
 ```bash
-npm install @authkit/express
+npm install @aymenkits/auth-express
 ```
 
-Installs with it: `@authkit/core`, `@authkit/otp` (automatic dependencies).
+Installs with it: `@aymenkits/auth-core`, `@aymenkits/auth-otp` (automatic dependencies).
 
 ## You provide
 
 - Your Express app/router
-- The flows/token service from `@authkit/core`
+- The flows/token service from `@aymenkits/auth-core`
 - Optionally your rate limiter (seam)
 
 The package never owns tables, never imports an ORM, HTTP framework, or
@@ -23,7 +23,7 @@ app implements on its own stack.
 ## Quick example
 
 ```ts
-import { createAuthMiddleware } from '@authkit/express'
+import { createAuthMiddleware } from '@aymenkits/auth-express'
 
 const { requireAuth } = createAuthMiddleware({ tokens })
 router.get('/users/me', requireAuth, meHandler)
@@ -31,7 +31,7 @@ router.get('/users/me', requireAuth, meHandler)
 
 ## Pairs with
 
-- Downstream kit handlers (@reviewkit/@chatkit/@notifykit express) read the `req.auth.userId` this middleware sets
+- Downstream kit handlers (@aymenkits/review-express, chat-express, notify-express) read the `req.auth.userId` this middleware sets
 
 Kits pair **by shape, never by import** — pass the sibling kit, your own
 service, or a stub in tests.

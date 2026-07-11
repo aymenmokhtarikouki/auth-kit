@@ -16,11 +16,11 @@ before adoption keep working.
 Flutter / web client
       │  contracts/API.md
       ▼
-@authkit/express   (middleware + handlers, Express 4/5, envelope-agnostic)
+@aymenkits/auth-express   (middleware + handlers, Express 4/5, envelope-agnostic)
       ▼
-@authkit/core      (flows: OTP login, providers, sessions, contact change)
+@aymenkits/auth-core      (flows: OTP login, providers, sessions, contact change)
    │        │
-   │        ├──► @authkit/otp   (code lifecycle)──► OtpStore / OtpSender   (app)
+   │        ├──► @aymenkits/auth-otp   (code lifecycle)──► OtpStore / OtpSender   (app)
    │        └──► IdTokenVerifier (google/apple JWKS)
    ▼
 UserStore / SessionStore                                                (app)

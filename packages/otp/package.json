@@ -1,5 +1,5 @@
 {
-  "name": "@authkit/otp",
+  "name": "@aymenkits/auth-otp",
   "version": "1.0.0",
   "description": "One-time-code engine: generate → hash → deliver → verify, with TTL, attempt caps, resend cooldown and a dev master code. Storage and delivery are seams (OtpStore / OtpSender).",
   "license": "MIT",

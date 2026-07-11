@@ -5,7 +5,7 @@
  * Passwords are optional (legacy compatibility) — no flow requires one.
  */
 import bcrypt from 'bcryptjs'
-import type { OtpChannel, OtpService } from '@authkit/otp'
+import type { OtpChannel, OtpService } from '@aymenkits/auth-otp'
 import type {
   AuthSession,
   AuthUser,
@@ -28,7 +28,7 @@ export interface CreateAuthServiceArgs<P, C extends object> {
   users: UserStore<P>
   session: SessionStrategy
   tokens: TokenOptions
-  /** Wire an @authkit/otp service to enable OTP login + contact change. */
+  /** Wire an @aymenkits/auth-otp service to enable OTP login + contact change. */
   otp?: OtpService
   /** ID-token verifiers by provider name ('google', 'apple', …). */
   providers?: Record<string, IdTokenVerifier>

@@ -1,6 +1,6 @@
 # auth-kit — HTTP contract
 
-The wire shapes every backend exposes (via `@authkit/express` or hand-rolled)
+The wire shapes every backend exposes (via `@aymenkits/auth-express` or hand-rolled)
 and every client (Flutter, web) implements. Payloads may be wrapped in the
 app's envelope (commonly `{ "data": … }`).
 

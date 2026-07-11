@@ -1,7 +1,7 @@
 {
-  "name": "@authkit/express",
+  "name": "@aymenkits/auth-express",
   "version": "1.0.0",
-  "description": "Express 4/5-compatible adapter for @authkit/core — requireAuth/optionalAuth middleware, claim guards, standard endpoint handlers and error mapping. Envelope-agnostic, structural req/res typing.",
+  "description": "Express 4/5-compatible adapter for @aymenkits/auth-core — requireAuth/optionalAuth middleware, claim guards, standard endpoint handlers and error mapping. Envelope-agnostic, structural req/res typing.",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,8 +14,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@authkit/core": "1.0.0",
-    "@authkit/otp": "1.0.0"
+    "@aymenkits/auth-core": "1.0.0",
+    "@aymenkits/auth-otp": "1.0.0"
   },
   "publishConfig": {
     "access": "public"

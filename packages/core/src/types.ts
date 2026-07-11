@@ -3,7 +3,7 @@
  * firstName/lastName or name/role) — the kit carries it
  * through registration untouched. `C` = extra JWT claims (e.g. role,
  * activeTenantId). Addresses/avatars/etc. are NOT identity — they live in
- * the app (or @authkit/addresses) and compose via hooks.
+ * the app (or @aymenkits/location-addresses) and compose via hooks.
  */
 
 export interface AuthUser<P = unknown> {
