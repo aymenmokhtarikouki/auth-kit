@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@aymenkits/auth-otp": "1.0.0",
+    "auth-kit": "file:../..",
     "bcryptjs": "^3.0.2",
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2"

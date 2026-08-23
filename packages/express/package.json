@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@aymenkits/auth-core": "1.0.0",
-    "@aymenkits/auth-otp": "1.0.0"
+    "@aymenkits/auth-otp": "1.0.0",
+    "auth-kit": "file:../.."
   },
   "publishConfig": {
     "access": "public"
