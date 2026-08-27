@@ -1,6 +1,6 @@
 # @aymenkits/auth-core
 
-OTP-first identity: token service (JWT HS256, drop-in compatible with hand-rolled jsonwebtoken apps), rotating OR static refresh strategies, password login (optional), Google/Apple ID-token sign-in, find-or-create flows and OTP-verified contact change.
+OTP-first identity: token service (JWT HS256, drop-in compatible with hand-rolled jsonwebtoken apps), rotating OR static refresh strategies (rotating takes an `onReplay` scope), password login (optional), Google/Apple ID-token sign-in, GitHub access-token sign-in, find-or-create flows and OTP-verified contact change.
 
 ## Install
 

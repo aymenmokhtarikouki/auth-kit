@@ -14,7 +14,7 @@ Consume as a **git submodule** at `vendor/auth-kit` with `file:` dependencies.
 | Package | What | Deps |
 | --- | --- | --- |
 | `@aymenkits/auth-otp` | Code engine: generate → bcrypt-hash → deliver → verify. TTL, attempt cap, resend cooldown, dev master code. Seams: `OtpStore`, `OtpSender` (+ ready SMTP/Twilio adapter factories that take YOUR configured client). | bcryptjs |
-| `@aymenkits/auth-core` | Sessions & flows: OTP login/registration, Google/Apple (`IdTokenVerifier` via JWKS), optional password compat, JWT access tokens with app claims, **pluggable refresh** — `rotating` (multi-device) or `static` (single token, no rotation) — OTP-verified contact change, `onUserCreated`/`onLogin` hooks. Seams: `UserStore<Profile>`, session stores. | otp, jsonwebtoken, jose, bcryptjs |
+| `@aymenkits/auth-core` | Sessions & flows: OTP login/registration, Google/Apple (`IdTokenVerifier` via JWKS) & GitHub (access-token, audience-checked), optional password compat, JWT access tokens with app claims, **pluggable refresh** — `rotating` (multi-device, with configurable replay scope) or `static` (single token, no rotation) — OTP-verified contact change, `onUserCreated`/`onLogin` hooks. Seams: `UserStore<Profile>`, session stores. | otp, jsonwebtoken, jose, bcryptjs |
 | `@aymenkits/auth-express` | Express 4/5 middleware (`requireAuth`, `optionalAuth`, `requireClaims`), standard endpoint handlers, kit-error→HTTP mapping. Envelope-agnostic. | core, otp |
 
 > The **address book + geocoding** moved to their own repo —
@@ -46,10 +46,13 @@ const auth = createAuthService<Profile, Claims>({
   users: myUserStore,
   otp,
   session: { mode: 'rotating', store: myRefreshStore }, // or 'static'
+                                                        // onReplay: 'session' to keep
+                                                        // siblings alive on a replay
   tokens: { accessSecret, refreshSecret },               // keep your EXISTING secrets
   providers: {
     google: googleIdTokenVerifier({ clientIds: [GOOGLE_CLIENT_ID] }),
     apple: appleIdTokenVerifier({ clientIds: [APPLE_SERVICE_ID] }),
+    github: githubAccessTokenVerifier({ clientId, clientSecret }),
   },
   claims: (u) => ({ role: u.profile.role }),
   hooks: { onUserCreated: (u) => createAppProfile(u) }, // attach addresses etc. HERE
