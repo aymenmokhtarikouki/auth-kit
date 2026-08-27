@@ -199,8 +199,20 @@ export function createAuthService<P = unknown, C extends object = Record<string,
         if (!(await session.store.isActive(jti))) {
           // Replay: the token's signature verified but the jti is no longer
           // active — it was already rotated or revoked, so someone is holding
-          // a stolen copy. Kill the whole family, not just this request.
-          await session.store.revokeAllForUser(userId)
+          // a stolen copy.
+          //
+          // HOW FAR THE RESPONSE REACHES IS THE DEPLOYMENT'S CALL (`onReplay`,
+          // see ReplayResponse). The default 'user' kills the whole family —
+          // right when one human owns one session, and far too wide when
+          // several instances are legitimately signed in to one account: there
+          // a single lost refresh race signs out every sibling AND the owner's
+          // own machine. 'session' revokes only the replayed jti and refuses
+          // this request, leaving siblings alone.
+          if ((session.onReplay ?? 'user') === 'session') {
+            await session.store.revoke(jti)
+          } else {
+            await session.store.revokeAllForUser(userId)
+          }
           throw new AuthError('SESSION_REVOKED', 401, 'Session expired — log in again')
         }
         await session.store.revoke(jti)

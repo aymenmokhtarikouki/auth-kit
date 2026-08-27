@@ -6,6 +6,7 @@ import {
   createInMemoryRotatingSessionStore,
   createInMemoryStaticSessionStore,
   AuthError,
+  githubAccessTokenVerifier,
   type IdTokenVerifier,
 } from '../src/index'
 
@@ -250,5 +251,85 @@ describe('OTP-verified contact change', () => {
     const updated = await auth.confirmContactChange(me.user.id, 'EMAIL', 'me@new.co', '123456')
     expect(updated.email).toBe('me@new.co')
     expect(other.user.email).toBe('other@user.co')
+  })
+})
+
+/**
+ * GitHub differs from Google/Apple in kind, not degree: there is no signed ID
+ * token to verify offline, only an opaque ACCESS token. An access token does
+ * not say which app it was issued for, so without an audience check any other
+ * site running "Sign in with GitHub" could replay a token it collected and be
+ * signed in as that user. These tests pin that check.
+ */
+describe('githubAccessTokenVerifier', () => {
+  const CLIENT = { clientId: 'cid', clientSecret: 'secret', userAgent: 'test' }
+  const okUser = { id: 4242, login: 'octocat', name: 'The Octocat', email: null }
+
+  const mockFetch = (
+    handlers: { check?: () => Response; user?: () => Response; emails?: () => Response },
+  ) =>
+    vi.fn(async (url: string | URL, init?: RequestInit) => {
+      const u = String(url)
+      if (u.includes('/applications/')) return handlers.check?.() ?? new Response('{}', { status: 200 })
+      if (u.endsWith('/user')) return handlers.user?.() ?? new Response(JSON.stringify(okUser), { status: 200 })
+      if (u.endsWith('/user/emails')) return handlers.emails?.() ?? new Response('[]', { status: 200 })
+      throw new Error('unexpected url ' + u)
+    })
+
+  it('REFUSES a token that belongs to another app (token substitution)', async () => {
+    // GitHub answers 404 from check-token when the token is not this app's.
+    const fetchMock = mockFetch({ check: () => new Response('{}', { status: 404 }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const v = githubAccessTokenVerifier(CLIENT)
+    await expect(v.verify('someone-elses-token')).rejects.toMatchObject({ code: 'PROVIDER_ERROR' })
+    // It must refuse BEFORE trusting /user — that call is the vulnerable one.
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/user'))).toBe(false)
+    vi.unstubAllGlobals()
+  })
+
+  it('sends the token in the BODY of check-token, never in the URL', async () => {
+    const fetchMock = mockFetch({})
+    vi.stubGlobal('fetch', fetchMock)
+    await githubAccessTokenVerifier(CLIENT).verify('tok-abc')
+    const call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/applications/'))!
+    expect(String(call[0])).not.toContain('tok-abc') // URLs get logged; bodies do not
+    expect(String((call[1] as RequestInit).body)).toContain('tok-abc')
+    vi.unstubAllGlobals()
+  })
+
+  it('keys on the numeric id, not the login (logins are reusable after rename)', async () => {
+    vi.stubGlobal('fetch', mockFetch({}))
+    const id = await githubAccessTokenVerifier(CLIENT).verify('tok')
+    expect(id).toMatchObject({ provider: 'github', subject: '4242', name: 'The Octocat' })
+    vi.unstubAllGlobals()
+  })
+
+  it('takes the primary VERIFIED address from /user/emails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockFetch({
+        emails: () =>
+          new Response(
+            JSON.stringify([
+              { email: 'alt@x.co', primary: false, verified: true },
+              { email: 'Me@X.co', primary: true, verified: true },
+            ]),
+            { status: 200 },
+          ),
+      }),
+    )
+    const id = await githubAccessTokenVerifier(CLIENT).verify('tok')
+    expect(id.email).toBe('me@x.co') // lowercased, like the other providers
+    expect(id.emailVerified).toBe(true)
+    vi.unstubAllGlobals()
+  })
+
+  it('still signs in when the token lacks user:email — no email is not a failure', async () => {
+    vi.stubGlobal('fetch', mockFetch({ emails: () => new Response('{}', { status: 403 }) }))
+    const id = await githubAccessTokenVerifier(CLIENT).verify('tok')
+    expect(id.subject).toBe('4242')
+    expect(id.email).toBeNull()
+    expect(id.emailVerified).toBe(false)
+    vi.unstubAllGlobals()
   })
 })

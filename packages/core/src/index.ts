@@ -10,6 +10,9 @@
  *     providers: {
  *       google: googleIdTokenVerifier({ clientIds: [GOOGLE_CLIENT_ID] }),
  *       apple: appleIdTokenVerifier({ clientIds: [APPLE_SERVICE_ID] }),
+ *       // GitHub issues no ID token — this verifies the ACCESS token belongs
+ *       // to your app (check-token) before trusting the identity behind it.
+ *       github: githubAccessTokenVerifier({ clientId, clientSecret }),
  *     },
  *     claims: (user) => ({ role: user.profile.role }),
  *     hooks: { onUserCreated: (u) => createAppProfile(u) },
@@ -39,7 +42,7 @@ export {
 } from './tokens'
 export type { TokenService } from './tokens'
 
-export { googleIdTokenVerifier, appleIdTokenVerifier } from './providers'
+export { googleIdTokenVerifier, appleIdTokenVerifier, githubAccessTokenVerifier } from './providers'
 
 export {
   createInMemoryUserStore,

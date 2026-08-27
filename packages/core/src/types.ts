@@ -74,8 +74,31 @@ export interface StaticSessionStore {
   get(userId: string): Promise<string | null>
 }
 
+/**
+ * How far a refresh-token REPLAY reaches when it is detected.
+ *
+ * A validly-signed refresh token whose jti is no longer active was already
+ * rotated out, so a copy of it is in circulation. The safe reading is that the
+ * copy is stolen, and `'user'` — the default, and the only behaviour before
+ * this option existed — kills every session that user has, on every device.
+ *
+ * That is right for a real deployment and wrong for a FLEET: several instances
+ * legitimately signed in to one account will race on refresh, and one loser's
+ * stale replay then signs out every other instance AND the human's own
+ * machine. Measured on katharina's test fleet (2026-08-27): five independently
+ * signed-in app instances, four sessions dead within minutes, the survivor
+ * being whichever signed in last.
+ *
+ * `'session'` narrows the response to the replayed session alone: that jti is
+ * revoked and the request is refused, while sibling sessions live on. It is
+ * strictly weaker — a genuine thief keeps their other stolen sessions — so it
+ * is opt-in, and a deployment that chooses it is saying "concurrent sessions
+ * for one account are expected here".
+ */
+export type ReplayResponse = 'user' | 'session'
+
 export type SessionStrategy =
-  | { mode: 'rotating'; store: RotatingSessionStore }
+  | { mode: 'rotating'; store: RotatingSessionStore; onReplay?: ReplayResponse }
   | { mode: 'static'; store: StaticSessionStore }
 
 // ── Tokens ───────────────────────────────────────────────────────────────────
