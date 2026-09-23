@@ -1,6 +1,6 @@
 {
   "name": "@aymenkits/auth-core",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "OTP-first identity & sessions: email/phone code login (find-or-create), Google & Apple ID-token sign-in with account linking, JWT access tokens, pluggable refresh strategies (rotating multi-device / static single-token), OTP-verified contact change. Storage-agnostic.",
   "license": "MIT",
   "main": "dist/index.js",
@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@aymenkits/auth-otp": "1.0.0",
-    "auth-kit": "file:../..",
     "bcryptjs": "^3.0.2",
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2"
