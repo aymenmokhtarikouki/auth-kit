@@ -23,12 +23,31 @@ app implements on its own stack.
 ## Quick example
 
 ```ts
-import { createTokenService, createAuthFlows } from '@aymenkits/auth-core'
+import { createAuthService, googleIdTokenVerifier } from '@aymenkits/auth-core'
 
-const tokens = createTokenService({ accessSecret, refreshSecret })
-const auth = createAuthFlows({ users, sessions, tokens, otp, strategy: 'rotating' })
+const auth = createAuthService({
+  users,                                          // your UserStore
+  session: { mode: 'rotating', store: sessions }, // or { mode: 'static', store }
+  tokens: { accessSecret, refreshSecret },
+  otp,                                            // from @aymenkits/auth-otp
+  providers: { google: googleIdTokenVerifier({ clientIds: [GOOGLE_CLIENT_ID] }) },
+})
 const session = await auth.verifyOtp({ channel: 'PHONE', destination, code })
 ```
+
+## Provider sign-in and account linking
+
+`signInWithProvider(provider, token)` signs in the account already linked to
+that provider identity. Otherwise it links the account with the same e-mail,
+but **only when the provider verified that address** (`emailVerified: true`).
+Otherwise it creates a new account. An unverified address is dropped: the
+sign-in gets an account of its own with `email: null`. A Google account that
+carries someone else's address therefore can't open that person's account or
+claim the address before they sign up.
+
+A custom `IdTokenVerifier` must set `emailVerified: true` explicitly, because
+omitted counts as unverified. This applies since 1.2.0; earlier versions
+ignored the flag, so upgrade.
 
 ## Pairs with
 

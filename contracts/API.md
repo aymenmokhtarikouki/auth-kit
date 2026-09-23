@@ -42,7 +42,10 @@ Login AND registration: verifies the code, **finds or creates** the user
 
 ### `POST /auth/provider` — `{ provider: "google"|"apple", idToken, profile? }`
 Verifies the provider ID token (JWKS), links or creates the account → same
-session payload as above.
+session payload as above. It links to an existing account only by an address
+the provider **verified**. An unverified address creates an account of its own
+with `user.email: null` and `isNewUser: true`; that account is never linked to
+the one that already has the address.
 
 ### `POST /auth/refresh` — `{ refreshToken }`
 → `{ token, refreshToken, expiresInSeconds }`.

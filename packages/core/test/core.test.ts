@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createOtpService, createInMemoryOtpStore, type OtpSender } from '@aymenkits/auth-otp'
 import {
   createAuthService,
@@ -178,9 +178,15 @@ describe('sessions — static strategy (single token)', () => {
   })
 })
 
+/** An account that proved `email` with a code — the one an attacker wants. */
+async function otpAccount(auth: ReturnType<typeof makeAuth>['auth'], email: string) {
+  await auth.requestOtp('EMAIL', email)
+  return (await auth.verifyOtp({ channel: 'EMAIL', destination: email, code: '123456' })).user
+}
+
 describe('provider sign-in (Google/Apple via fake verifier)', () => {
-  const fakeVerifier = (subject: string, email: string | null): IdTokenVerifier => ({
-    verify: async () => ({ provider: 'google', subject, email, emailVerified: true }),
+  const fakeVerifier = (subject: string, email: string | null, emailVerified = true): IdTokenVerifier => ({
+    verify: async () => ({ provider: 'google', subject, email, emailVerified }),
   })
 
   it('creates + links on first sign-in, finds by provider afterwards', async () => {
@@ -194,15 +200,60 @@ describe('provider sign-in (Google/Apple via fake verifier)', () => {
     expect(again.user.id).toBe(first.user.id)
   })
 
-  it('links the provider to an existing account with the same email', async () => {
-    const { auth } = makeAuth({ providers: { google: fakeVerifier('g-2', 'linked@user.com') } })
+  it('links the provider to an existing account with the same VERIFIED email', async () => {
+    const { auth, users } = makeAuth({ providers: { google: fakeVerifier('g-2', 'linked@user.com') } })
+    const linkProvider = vi.spyOn(users, 'linkProvider')
     // Existing OTP-registered user…
-    await auth.requestOtp('EMAIL', 'linked@user.com')
-    const otpSession = await auth.verifyOtp({ channel: 'EMAIL', destination: 'linked@user.com', code: '123456' })
-    // …signs in with Google → same account, no duplicate.
+    const existing = await otpAccount(auth, 'linked@user.com')
+    // …signs in with Google, which verified the same address → same account, no duplicate.
     const google = await auth.signInWithProvider('google', 'token')
     expect(google.isNewUser).toBe(false)
-    expect(google.user.id).toBe(otpSession.user.id)
+    expect(google.user.id).toBe(existing.id)
+    expect(linkProvider).toHaveBeenCalledWith(existing.id, 'google', 'g-2')
+  })
+
+  it('an UNVERIFIED email never reaches the account that has it', async () => {
+    // Anyone can put someone else's address on a Google account; Google then
+    // says email_verified: false. That proves nothing about who owns it.
+    const { auth, users } = makeAuth({
+      providers: { google: fakeVerifier('g-attacker', 'victim@user.com', false) },
+    })
+    const linkProvider = vi.spyOn(users, 'linkProvider')
+    const victim = await otpAccount(auth, 'victim@user.com')
+
+    const attacker = await auth.signInWithProvider('google', 'token')
+    expect(attacker.user.id).not.toBe(victim.id)
+    expect(attacker.isNewUser).toBe(true)
+    expect(attacker.user.email).toBeNull() // not stored as a contact either
+    expect(linkProvider).toHaveBeenCalledTimes(1)
+    expect(linkProvider).toHaveBeenCalledWith(attacker.user.id, 'google', 'g-attacker')
+    expect(linkProvider).not.toHaveBeenCalledWith(victim.id, expect.anything(), expect.anything())
+
+    // The Google account stays on its own account; the victim's is untouched.
+    expect((await auth.signInWithProvider('google', 'token')).user.id).toBe(attacker.user.id)
+    expect(await users.findById(victim.id)).toMatchObject({ email: 'victim@user.com' })
+  })
+
+  it('an unverified email is not stored, so it cannot be squatted before its owner signs up', async () => {
+    // Stored on the attacker's account, the address would send the owner's
+    // first code login (find-or-create by email) straight into that account.
+    const { auth } = makeAuth({ providers: { google: fakeVerifier('g-squat', 'future@user.com', false) } })
+    const squatter = await auth.signInWithProvider('google', 'token')
+    const owner = await otpAccount(auth, 'future@user.com')
+    expect(owner.id).not.toBe(squatter.user.id)
+  })
+
+  it('a verifier that omits emailVerified is treated as unverified', async () => {
+    // Custom IdTokenVerifiers (firebase-admin, …) must say so explicitly.
+    const { auth } = makeAuth({
+      providers: {
+        custom: { verify: async () => ({ provider: 'custom', subject: 'c-1', email: 'owner@user.com' }) },
+      },
+    })
+    const owner = await otpAccount(auth, 'owner@user.com')
+    const s = await auth.signInWithProvider('custom', 'token')
+    expect(s.user.id).not.toBe(owner.id)
+    expect(s.user.email).toBeNull()
   })
 
   it('unconfigured provider → NOT_SUPPORTED', async () => {
@@ -331,5 +382,44 @@ describe('githubAccessTokenVerifier', () => {
     expect(id.email).toBeNull()
     expect(id.emailVerified).toBe(false)
     vi.unstubAllGlobals()
+  })
+
+  describe('through signInWithProvider — only a verified address links', () => {
+    afterEach(() => vi.unstubAllGlobals())
+    const emails = (list: object[]) => () => new Response(JSON.stringify(list), { status: 200 })
+
+    it('a verified primary address joins the account that has it', async () => {
+      vi.stubGlobal('fetch', mockFetch({ emails: emails([{ email: 'Owner@X.co', primary: true, verified: true }]) }))
+      const { auth, users } = makeAuth({ providers: { github: githubAccessTokenVerifier(CLIENT) } })
+      const linkProvider = vi.spyOn(users, 'linkProvider')
+      const owner = await otpAccount(auth, 'owner@x.co')
+
+      const s = await auth.signInWithProvider('github', 'tok')
+      expect(s.user.id).toBe(owner.id)
+      expect(s.isNewUser).toBe(false)
+      expect(linkProvider).toHaveBeenCalledWith(owner.id, 'github', '4242')
+    })
+
+    it.each([
+      ['an unverified primary address', { emails: emails([{ email: 'victim@x.co', primary: true, verified: false }]) }],
+      [
+        'a public-profile address without user:email',
+        {
+          user: () => new Response(JSON.stringify({ ...okUser, email: 'victim@x.co' }), { status: 200 }),
+          emails: () => new Response('{}', { status: 403 }),
+        },
+      ],
+    ])('%s never takes over the account that has it', async (_, handlers) => {
+      vi.stubGlobal('fetch', mockFetch(handlers))
+      const { auth, users } = makeAuth({ providers: { github: githubAccessTokenVerifier(CLIENT) } })
+      const linkProvider = vi.spyOn(users, 'linkProvider')
+      const victim = await otpAccount(auth, 'victim@x.co')
+
+      const s = await auth.signInWithProvider('github', 'tok')
+      expect(s.user.id).not.toBe(victim.id)
+      expect(s.isNewUser).toBe(true)
+      expect(s.user.email).toBeNull()
+      expect(linkProvider).not.toHaveBeenCalledWith(victim.id, expect.anything(), expect.anything())
+    })
   })
 })

@@ -84,11 +84,24 @@ it refuses `OTP_DEV_CODE`).
 
 **Google and Apple** reduce to *verify a provider-signed JWT against their JWKS*
 (`jose`, lazily imported so CJS apps work): issuer + audience (your client ids)
-checked, then: ① linked account? sign in. ② same email exists? link provider to
-it. ③ else create + link (`isNewUser: true`). The `IdTokenVerifier` seam means
-apps on firebase-admin keep their verification unchanged, and web redirect OAuth
-(a passport flow) feeds its callback `id_token` into the same function —
-the kit never needs Express sessions or redirect plumbing.
+checked, then: ① linked account? sign in. ② same **verified** email exists?
+link provider to it. ③ else create + link (`isNewUser: true`). The
+`IdTokenVerifier` seam means apps on firebase-admin keep their verification
+unchanged, and web redirect OAuth (a passport flow) feeds its callback
+`id_token` into the same function — the kit never needs Express sessions or
+redirect plumbing.
+
+**Only a provider-verified address links.** A valid token proves who the
+*provider account* is, not who owns the address on it: anyone can put someone
+else's e-mail on a Google account, and the token then says
+`email_verified: false`. Linking on that address would sign the attacker into
+the owner's account. So step ② runs only when the identity carries
+`emailVerified: true`; otherwise the sign-in gets an account of its own
+**without** the address (`email: null`). Storing it would be a slower version
+of the same hole: the owner's first code login would find-or-create by that
+address, straight into the attacker's account. A custom `IdTokenVerifier` must
+set `emailVerified: true` explicitly — omitted counts as unverified. (Before
+1.2.0 the flag was ignored.)
 
 **GitHub is different in kind, not degree.** A GitHub OAuth App issues no OIDC
 ID token at all; the client ends up holding an opaque **access token**, which
@@ -110,8 +123,9 @@ So `githubAccessTokenVerifier` asks GitHub twice, in this order:
    (logins are reusable after a rename, so keying on one hands the account to
    whoever claims the freed name). Then `GET /user/emails` for the primary
    verified address, since the public-profile email is null for most accounts.
-   A token without the `user:email` scope still signs in, with no email rather
-   than an error — the account still has a stable subject to key on.
+   A token without the `user:email` scope still signs in rather than erroring:
+   its address (at most the public one) counts as unverified, so it neither
+   links nor is stored — the account still has a stable subject to key on.
 
 ```ts
 github: githubAccessTokenVerifier({ clientId, clientSecret }),

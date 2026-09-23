@@ -3,7 +3,7 @@
 Shared identity toolkit. **OTP-first**: email/
 phone codes are the primary login *and* registration (verify = find-or-create) —
 no passwords required anywhere. Google & Apple sign-in via ID-token verification
-with account linking. Storage-agnostic: the kit owns **behavior**, your app owns
+with account linking by provider-verified e-mail. Storage-agnostic: the kit owns **behavior**, your app owns
 its tables through small store interfaces (Prisma, raw SQL —
 same pattern as clustermap-kit).
 

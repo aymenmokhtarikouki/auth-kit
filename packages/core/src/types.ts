@@ -19,6 +19,11 @@ export interface ProviderIdentity {
   /** Provider's stable user id (`sub`). */
   subject: string
   email?: string | null
+  /**
+   * Only `true` lets `email` link to an existing account or be stored on a
+   * new one. `false` or omitted = unverified: the sign-in gets an account of
+   * its own, without that address. Custom verifiers must set it explicitly.
+   */
   emailVerified?: boolean
   name?: string | null
 }

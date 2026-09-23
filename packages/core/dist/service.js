@@ -7,7 +7,8 @@ exports.createAuthService = createAuthService;
 /**
  * The auth flows. OTP-FIRST: email/phone codes are the primary login AND
  * registration (verify = find-or-create — the production flow this kit was extracted from).
- * Google/Apple sign in via verified ID tokens with account linking.
+ * Google/Apple sign in via verified ID tokens with account linking (by an
+ * e-mail the provider verified, never by an unverified one).
  * Passwords are optional (legacy compatibility) — no flow requires one.
  */
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -73,18 +74,26 @@ function createAuthService(args) {
             if (!verifier)
                 throw new types_1.AuthError('NOT_SUPPORTED', 500, `Provider "${provider}" not configured`);
             const identity = await verifier.verify(idToken);
+            // Only an address the provider VERIFIED says who is signing in. Anyone
+            // can put someone else's address on a Google account (the token then
+            // carries email_verified: false); trusted, it would open that person's
+            // account here. So an unverified address — or one whose flag the
+            // verifier omits — is dropped: it neither links nor gets stored, since a
+            // stored one would let a later code login for it find-or-create into
+            // this account.
+            const email = identity.emailVerified === true ? (identity.email ?? null) : null;
             // 1. Already linked → sign in.
             let user = await users.findByProvider(identity.provider, identity.subject);
             let isNewUser = false;
-            if (!user && identity.email) {
-                // 2. Same email exists → link the provider to that account.
-                user = await users.findByEmail(identity.email);
+            if (!user && email) {
+                // 2. Same verified email exists → link the provider to that account.
+                user = await users.findByEmail(email);
                 if (user)
                     await users.linkProvider(user.id, identity.provider, identity.subject);
             }
             if (!user) {
                 // 3. Brand new → create + link.
-                user = await users.create({ email: identity.email ?? null, profile });
+                user = await users.create({ email, profile });
                 await users.linkProvider(user.id, identity.provider, identity.subject);
                 await hooks?.onUserCreated?.(user, { flow: provider });
                 isNewUser = true;

@@ -47,8 +47,9 @@ export declare function appleIdTokenVerifier(options: {
  * Email needs a second call. `GET /user` returns `email` only when the user
  * made it public — for most accounts it is null — so the primary verified
  * address is read from `GET /user/emails`, which needs the `user:email` scope.
- * A token without that scope still signs in; it just arrives with no email,
- * which the caller can treat as it treats an unverified one.
+ * A token without that scope still signs in; its address (at most the public
+ * one) arrives unverified, and `signInWithProvider` never links or stores an
+ * unverified address.
  */
 export declare function githubAccessTokenVerifier(options: {
     /** OAuth App client id — also the audience this token must belong to. */
