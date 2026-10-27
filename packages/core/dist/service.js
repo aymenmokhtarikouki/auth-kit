@@ -130,6 +130,18 @@ function createAuthService(args) {
         async refresh(refreshToken) {
             const { userId, jti } = tokens.verifyRefresh(refreshToken);
             if (session.mode === 'rotating') {
+                if (session.store.rotate) {
+                    const user = await users.findById(userId);
+                    if (!user)
+                        throw new types_1.AuthError('USER_NOT_FOUND', 401, 'Account not found');
+                    const next = tokens.signRefresh(user.id);
+                    if (!(await session.store.rotate(user.id, jti, next))) {
+                        if ((session.onReplay ?? 'user') === 'user')
+                            await session.store.revokeAllForUser(user.id);
+                        throw new types_1.AuthError('SESSION_REVOKED', 401, 'Session expired — log in again');
+                    }
+                    return { token: tokens.signAccess(user.id, buildClaims(user)), refreshToken: next.token, expiresInSeconds: tokens.accessTtlSeconds };
+                }
                 // Rotate: the used token dies, a fresh pair is born.
                 if (!(await session.store.isActive(jti))) {
                     // Replay: the token's signature verified but the jti is no longer

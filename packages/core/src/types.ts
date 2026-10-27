@@ -58,6 +58,8 @@ export interface UserStore<P = unknown> {
  * new pair; multiple devices = multiple live tokens. Store tracks jti values.
  */
 export interface RotatingSessionStore {
+  /** Atomically consume an active token and create its successor. Recommended for persistent stores. */
+  rotate?(userId: string, previousJti: string, next: { jti: string; expiresAt: Date }): Promise<boolean>
   add(userId: string, jti: string, expiresAt: Date): Promise<void>
   isActive(jti: string): Promise<boolean>
   revoke(jti: string): Promise<void>
